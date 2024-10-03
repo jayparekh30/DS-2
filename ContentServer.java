@@ -1,10 +1,7 @@
-
-
 import java.io.*;
 import java.net.*;
 import java.util.LinkedHashMap;
 import org.json.JSONObject;
-import org.json.JSONWriter;
 
 public class ContentServer {
     private static LamportClock clock = new LamportClock();  // Initialize Lamport clock
@@ -57,28 +54,30 @@ public class ContentServer {
             // Log connection success
             System.out.println("Connected to AggregationServer");
 
-            // Manually create the JSON string in the correct order using JSONWriter
-            StringWriter stringWriter = new StringWriter();
-            JSONWriter jsonWriter = new JSONWriter(stringWriter);
-            jsonWriter.object();
+            // Create formatted JSON string 
+            StringBuilder jsonBuilder = new StringBuilder();
+            jsonBuilder.append("{\n");
             for (String key : weatherData.keySet()) {
-                jsonWriter.key(key).value(weatherData.get(key));
+                jsonBuilder.append("  \"").append(key).append("\": \"").append(weatherData.get(key)).append("\",\n");
             }
-            jsonWriter.endObject();
-            String jsonString = stringWriter.toString();
+            // Remove the trailing comma and append the closing bracket
+            jsonBuilder.setLength(jsonBuilder.length() - 2);
+            jsonBuilder.append("\n}");
+
+            String prettyJsonString = jsonBuilder.toString();
 
             // Send PUT request headers
             out.println("PUT /weather.json HTTP/1.1");
             out.println("Host: " + server + ":" + port);
             out.println("User-Agent: ContentServer/1.0");
             out.println("Content-Type: application/json");
-            out.println("Content-Length: " + jsonString.length());
+            out.println("Content-Length: " + prettyJsonString.length());
             out.println("Lamport-Clock: " + clock.getClock());  // Send the Lamport clock in headers
             out.println();  // Blank line to indicate end of headers
 
-            // Send the JSON data in the body
-            out.println(jsonString);
-            System.out.println("Sending JSON data:\n" + jsonString);
+            // Send the manually formatted JSON data in the body
+            out.println(prettyJsonString); 
+            System.out.println("Sending JSON data:\n" + prettyJsonString);  // Log pretty-printed JSON
 
             // Read and print the server response
             String response;

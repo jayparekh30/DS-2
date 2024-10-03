@@ -1,4 +1,3 @@
-
 import java.io.*;
 import java.net.*;
 import java.util.concurrent.*;
@@ -28,7 +27,6 @@ public class AggregationServer {
         }
     }
 
-// It communicate with Client
     private static void processClientRequest(Socket clientSocket) {
         try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              PrintWriter outputWriter = new PrintWriter(clientSocket.getOutputStream(), true)) {
@@ -49,21 +47,33 @@ public class AggregationServer {
         }
     }
 
-// Handle Get Request
-private static void handleGetRequest(PrintWriter output) {
+    // Handle GET request and return formatted JSON
+    private static void handleGetRequest(PrintWriter output) {
         lamportTimestamp.incrementAndGet();  // Increment lamport clock
 
-        JSONObject jsonResponse = new JSONObject();
+        StringBuilder jsonBuilder = new StringBuilder();
+        jsonBuilder.append("{\n");
+        
         for (WeatherRecord record : weatherDataMap.values()) {
-            jsonResponse.put(record.getWeatherData().getString("id"), record.getWeatherData());
+            JSONObject weatherJson = record.getWeatherData();
+            jsonBuilder.append("  \"").append(weatherJson.getString("id")).append("\": ").append(weatherJson.toString(4)).append(",\n");
         }
+
+        // Remove the trailing comma and close the JSON object
+        if (jsonBuilder.length() > 2) {
+            jsonBuilder.setLength(jsonBuilder.length() - 2);  // Remove the trailing comma
+        }
+        jsonBuilder.append("\n}");
+
+        String prettyPrintedJson = jsonBuilder.toString();
 
         output.println("HTTP/1.1 200 OK");
         output.println("Content-Type: application/json");
-        output.println();
-        output.println(jsonResponse.toString(4));
+        output.println("Content-Length: " + prettyPrintedJson.length());  // Correct Content-Length
+        output.println();  // End of headers
+        output.println(prettyPrintedJson);  // Send formatted JSON
+        System.out.println("Sent GET response:\n" + prettyPrintedJson);  // Log the pretty-printed JSON
     }
-    
 
     private static void handlePutRequest(BufferedReader input, PrintWriter output) throws IOException {
         lamportTimestamp.incrementAndGet();  // Increment lamport clock
@@ -102,8 +112,7 @@ private static void handleGetRequest(PrintWriter output) {
         }
     }
 
-
-   private static void initiateDataCleanupTask() {
+    private static void initiateDataCleanupTask() {
         ScheduledExecutorService cleanupScheduler = Executors.newScheduledThreadPool(1);
         cleanupScheduler.scheduleAtFixedRate(() -> {
             long currentTime = System.currentTimeMillis();
