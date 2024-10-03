@@ -11,7 +11,7 @@ public class AggregationServer {
     private static final int DATA_EXPIRY_TIME_MS = 30000;  
     private static final ConcurrentHashMap<String, WeatherRecord> weatherDataMap = new ConcurrentHashMap<>();  
     private static final AtomicLong lamportTimestamp = new AtomicLong(0);  
-    
+
     public static void main(String[] args) {
         int port = (args.length > 0) ? Integer.parseInt(args[0]) : SERVER_PORT;
         
@@ -28,43 +28,42 @@ public class AggregationServer {
         }
     }
 
-    private static void handleClientRequest(Socket socket) {
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+// It communicate with Client
+    private static void processClientRequest(Socket clientSocket) {
+        try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+             PrintWriter outputWriter = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
-            String request = in.readLine();
-            System.out.println("Received request: " + request);  // Log incoming requests
+            String clientRequest = inputReader.readLine();
+            System.out.println("Request received: " + clientRequest);
 
-            if (request.startsWith("GET")) {
-                handleGetRequest(out);
-            } else if (request.startsWith("PUT")) {
-                handlePutRequest(in, out);
+            if (clientRequest.startsWith("GET")) {
+                handleGetRequest(outputWriter);
+            } else if (clientRequest.startsWith("PUT")) {
+                handlePutRequest(inputReader, outputWriter);
             } else {
-                out.println("HTTP/1.1 400 Bad Request");
+                outputWriter.println("HTTP/1.1 400 Bad Request");
             }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    
-    private static void handleGetRequest(PrintWriter out) {
-    lamportClock.incrementAndGet();
-    JSONObject jsonResponse = new JSONObject();
-    
-    // Log the current state of the data store
-    System.out.println("Data store contains: " + dataStore.keySet());
+// Handle Get Request
+private static void handleGetRequest(PrintWriter output) {
+        lamportTimestamp.incrementAndGet();  // Increment lamport clock
 
-    for (WeatherData data : dataStore.values()) {
-        jsonResponse.put(data.getWeatherJson().getString("id"), data.getWeatherJson());
+        JSONObject jsonResponse = new JSONObject();
+        for (WeatherRecord record : weatherDataMap.values()) {
+            jsonResponse.put(record.getWeatherData().getString("id"), record.getWeatherData());
+        }
+
+        output.println("HTTP/1.1 200 OK");
+        output.println("Content-Type: application/json");
+        output.println();
+        output.println(jsonResponse.toString(4));
     }
-
-    out.println("HTTP/1.1 200 OK");
-    out.println("Content-Type: application/json");
-    out.println();
-    out.println(jsonResponse.toString(4));
-}
-
+    
     
     private static void handlePutRequest(BufferedReader in, PrintWriter out) throws IOException {
     lamportClock.incrementAndGet();
