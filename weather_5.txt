@@ -1,0 +1,17 @@
+id:IDS60914
+name:Perth (Cottesloe Beach)
+state: Western Australia
+time_zone:AWST
+lat:-31.9
+lon:115.8
+local_date_time:16/08:00am
+local_date_time_full:20230916080000
+air_temp:21.3
+apparent_t:22.0
+cloud:Clear sky
+dewpt:12.3
+press:1013.2
+rel_hum:50
+wind_dir:SE
+wind_spd_kmh:25
+wind_spd_kt:14

@@ -1,0 +1,17 @@
+id:IDS60916
+name:Hobart (Battery Point)
+state: Tasmania
+time_zone:AEST
+lat:-42.9
+lon:147.3
+local_date_time:16/03:15pm
+local_date_time_full:20230916151500
+air_temp:14.2
+apparent_t:13.8
+cloud:Overcast
+dewpt:8.2
+press:1024.1
+rel_hum:65
+wind_dir:S
+wind_spd_kmh:18
+wind_spd_kt:10

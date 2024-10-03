@@ -1,0 +1,17 @@
+id:IDS60911
+name:Sydney (Bondi Beach)
+state: New South Wales
+time_zone:AEST
+lat:-33.9
+lon:151.2
+local_date_time:16/11:30am
+local_date_time_full:20230916113000
+air_temp:23.4
+apparent_t:24.2
+cloud:Sunny
+dewpt:17.5
+press:1016.0
+rel_hum:55
+wind_dir:N
+wind_spd_kmh:28
+wind_spd_kt:15

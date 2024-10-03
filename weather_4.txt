@@ -1,0 +1,17 @@
+id:IDS60913
+name:Brisbane (South Bank)
+state: Queensland
+time_zone:AEST
+lat:-27.5
+lon:153.0
+local_date_time:16/10:15am
+local_date_time_full:20230916101500
+air_temp:25.8
+apparent_t:26.5
+cloud:Mostly sunny
+dewpt:18.0
+press:1015.9
+rel_hum:65
+wind_dir:NE
+wind_spd_kmh:15
+wind_spd_kt:8

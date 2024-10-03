@@ -1,0 +1,17 @@
+id:IDS60912
+name:Melbourne (Docklands)
+state: Victoria
+time_zone:AEST
+lat:-37.8
+lon:144.9
+local_date_time:16/09:45am
+local_date_time_full:20230916094500
+air_temp:17.6
+apparent_t:16.9
+cloud:Partly cloudy
+dewpt:9.8
+press:1021.3
+rel_hum:60
+wind_dir:W
+wind_spd_kmh:18
+wind_spd_kt:10

@@ -1,0 +1,17 @@
+id:IDS60915
+name:Darwin (Mindil Beach)
+state: Northern Territory
+time_zone:ACST
+lat:-12.5
+lon:130.8
+local_date_time:16/12:00pm
+local_date_time_full:20230916120000
+air_temp:32.1
+apparent_t:34.5
+cloud:Clear sky
+dewpt:22.5
+press:1009.7
+rel_hum:60
+wind_dir:NW
+wind_spd_kmh:35
+wind_spd_kt:19
