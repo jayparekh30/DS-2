@@ -27,16 +27,19 @@ public class AggregationServer {
         }
     }
 
+    // It communicates with the client
     private static void processClientRequest(Socket clientSocket) {
         try (BufferedReader inputReader = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
              PrintWriter outputWriter = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
             String clientRequest = inputReader.readLine();
-            System.out.println("Request received: " + clientRequest);
+            System.out.println("Request received: " + clientRequest);  // Log the incoming request
 
             if (clientRequest.startsWith("GET")) {
                 handleGetRequest(outputWriter);
             } else if (clientRequest.startsWith("PUT")) {
+                // Log that we are handling a PUT request
+                System.out.println("Handling PUT request...");
                 handlePutRequest(inputReader, outputWriter);
             } else {
                 outputWriter.println("HTTP/1.1 400 Bad Request");
@@ -47,7 +50,7 @@ public class AggregationServer {
         }
     }
 
-    // Handle GET request and return formatted JSON
+    // Handle GET request and return manually formatted JSON
     private static void handleGetRequest(PrintWriter output) {
         lamportTimestamp.incrementAndGet();  // Increment lamport clock
 
@@ -71,7 +74,7 @@ public class AggregationServer {
         output.println("Content-Type: application/json");
         output.println("Content-Length: " + prettyPrintedJson.length());  // Correct Content-Length
         output.println();  // End of headers
-        output.println(prettyPrintedJson);  // Send formatted JSON
+        output.println(prettyPrintedJson);  // Send manually formatted JSON
         System.out.println("Sent GET response:\n" + prettyPrintedJson);  // Log the pretty-printed JSON
     }
 
@@ -81,7 +84,10 @@ public class AggregationServer {
         String line;
         int contentLength = 0;
 
+        // Read and log headers from the request
+        System.out.println("Reading PUT request headers...");
         while (!(line = input.readLine()).isEmpty()) {
+            System.out.println(line);  // Log each header line
             if (line.startsWith("Content-Length:")) {
                 contentLength = Integer.parseInt(line.split(":")[1].trim());
             }
@@ -93,9 +99,16 @@ public class AggregationServer {
             return;
         }
 
+        // Log the content length
+        System.out.println("Content-Length: " + contentLength);
+
+        // Read the body based on Content-Length
         char[] body = new char[contentLength];
         input.read(body, 0, contentLength);
         String receivedJsonString = new String(body);
+
+        // Log the received JSON string
+        System.out.println("Received JSON body:\n" + receivedJsonString);
 
         try {
             JSONObject weatherJson = new JSONObject(receivedJsonString);

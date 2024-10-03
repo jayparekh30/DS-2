@@ -54,30 +54,22 @@ public class ContentServer {
             // Log connection success
             System.out.println("Connected to AggregationServer");
 
-            // Create formatted JSON string 
-            StringBuilder jsonBuilder = new StringBuilder();
-            jsonBuilder.append("{\n");
-            for (String key : weatherData.keySet()) {
-                jsonBuilder.append("  \"").append(key).append("\": \"").append(weatherData.get(key)).append("\",\n");
-            }
-            // Remove the trailing comma and append the closing bracket
-            jsonBuilder.setLength(jsonBuilder.length() - 2);
-            jsonBuilder.append("\n}");
-
-            String prettyJsonString = jsonBuilder.toString();
+            // Create JSON string
+            JSONObject jsonObject = new JSONObject(weatherData);
+            String jsonString = jsonObject.toString(4);  // Format with 4 spaces
 
             // Send PUT request headers
             out.println("PUT /weather.json HTTP/1.1");
             out.println("Host: " + server + ":" + port);
             out.println("User-Agent: ContentServer/1.0");
             out.println("Content-Type: application/json");
-            out.println("Content-Length: " + prettyJsonString.length());
+            out.println("Content-Length: " + jsonString.length());
             out.println("Lamport-Clock: " + clock.getClock());  // Send the Lamport clock in headers
             out.println();  // Blank line to indicate end of headers
 
-            // Send the manually formatted JSON data in the body
-            out.println(prettyJsonString); 
-            System.out.println("Sending JSON data:\n" + prettyJsonString);  // Log pretty-printed JSON
+            // Send the JSON data in the body
+            out.println(jsonString);
+            System.out.println("Sending JSON data:\n" + jsonString);
 
             // Read and print the server response
             String response;
