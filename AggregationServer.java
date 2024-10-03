@@ -6,20 +6,22 @@ import org.json.JSONObject;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class AggregationServer {
-    private static final int DEFAULT_PORT = 4567;
-    private static final int EXPIRATION_TIME_MS = 30000;
-    private static final ConcurrentHashMap<String, WeatherData> dataStore = new ConcurrentHashMap<>();
-    private static final AtomicLong lamportClock = new AtomicLong(0);
 
+    private static final int SERVER_PORT = 4567;  
+    private static final int DATA_EXPIRY_TIME_MS = 30000;  
+    private static final ConcurrentHashMap<String, WeatherRecord> weatherDataMap = new ConcurrentHashMap<>();  
+    private static final AtomicLong lamportTimestamp = new AtomicLong(0);  
+    
     public static void main(String[] args) {
-        int port = args.length > 0 ? Integer.parseInt(args[0]) : DEFAULT_PORT;
+        int port = (args.length > 0) ? Integer.parseInt(args[0]) : SERVER_PORT;
+        
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Aggregation server running on port " + port);
-            startDataExpunger();
+            System.out.println("Server running on port " + port);
+            initiateDataCleanupTask();  
 
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                new Thread(() -> handleClientRequest(clientSocket)).start();
+                new Thread(() -> processClientRequest(clientSocket)).start();  
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -134,3 +136,5 @@ public class AggregationServer {
         }
     }
 }
+
+
