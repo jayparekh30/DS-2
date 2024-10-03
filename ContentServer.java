@@ -19,7 +19,10 @@ public class ContentServer {
         try {
             // Convert the weather_data.txt file content into a LinkedHashMap to preserve order
             LinkedHashMap<String, String> weatherData = convertFileToLinkedHashMap(filePath);
-            System.out.println("Parsed weather data: " + weatherData);
+            
+            // Create a JSON object from the parsed weather data for pretty printing
+            JSONObject weatherJson = new JSONObject(weatherData);
+            System.out.println("Parsed weather data:\n" + weatherJson.toString(4));  // Pretty-print the JSON data
 
             clock.tick();  // Increment clock before sending data
             System.out.println("Lamport clock before PUT: " + clock.getClock());
