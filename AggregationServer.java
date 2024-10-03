@@ -64,69 +64,70 @@ private static void handleGetRequest(PrintWriter output) {
         output.println(jsonResponse.toString(4));
     }
     
-    
-    private static void handlePutRequest(BufferedReader in, PrintWriter out) throws IOException {
-    lamportClock.incrementAndGet();
-    String line;
-    int contentLength = 0;
 
-    // Read headers to find Content-Length
-    while (!(line = in.readLine()).isEmpty()) {
-        if (line.startsWith("Content-Length:")) {
-            contentLength = Integer.parseInt(line.split(":")[1].trim());
+    private static void handlePutRequest(BufferedReader input, PrintWriter output) throws IOException {
+        lamportTimestamp.incrementAndGet();  // Increment lamport clock
+
+        String line;
+        int contentLength = 0;
+
+        while (!(line = input.readLine()).isEmpty()) {
+            if (line.startsWith("Content-Length:")) {
+                contentLength = Integer.parseInt(line.split(":")[1].trim());
+            }
+        }
+
+        if (contentLength == 0) {
+            System.out.println("Error: Content-Length is 0. No data provided.");
+            output.println("HTTP/1.1 400 Bad Request");
+            return;
+        }
+
+        char[] body = new char[contentLength];
+        input.read(body, 0, contentLength);
+        String receivedJsonString = new String(body);
+
+        try {
+            JSONObject weatherJson = new JSONObject(receivedJsonString);
+            String id = weatherJson.getString("id");
+
+            weatherDataMap.put(id, new WeatherRecord(weatherJson, System.currentTimeMillis())); 
+            System.out.println("Weather data stored for ID: " + id);
+
+            output.println("HTTP/1.1 201 Created");
+        } catch (Exception e) {
+            System.err.println("Error processing PUT request: " + e.getMessage());
+            e.printStackTrace();
+            output.println("HTTP/1.1 500 Internal Server Error");
         }
     }
 
-    // Read the body based on Content-Length
-    char[] body = new char[contentLength];
-    in.read(body, 0, contentLength);
-    String jsonString = new String(body);
 
-    try {
-        // Parse the JSON data
-        System.out.println("Received PUT request with JSON: " + jsonString);
-        JSONObject jsonObject = new JSONObject(jsonString);
-        String id = jsonObject.getString("id");
-
-        // Store the weather data with a timestamp
-        dataStore.put(id, new WeatherData(jsonObject, System.currentTimeMillis()));
-        System.out.println("Storing weather data with ID: " + id);
-        out.println("HTTP/1.1 201 Created");
-    } catch (Exception e) {
-        System.err.println("Error processing PUT request: " + e.getMessage());
-        e.printStackTrace();
-        out.println("HTTP/1.1 500 Internal Server Error");
+   private static void initiateDataCleanupTask() {
+        ScheduledExecutorService cleanupScheduler = Executors.newScheduledThreadPool(1);
+        cleanupScheduler.scheduleAtFixedRate(() -> {
+            long currentTime = System.currentTimeMillis();
+            weatherDataMap.entrySet().removeIf(entry -> {
+                boolean shouldRemove = (currentTime - entry.getValue().getTimestamp()) > DATA_EXPIRY_TIME_MS;
+                if (shouldRemove) {
+                    System.out.println("Removing expired data with ID: " + entry.getKey());
+                }
+                return shouldRemove;
+            });
+        }, 0, 5, TimeUnit.SECONDS);
     }
-}
 
-
-    
-    private static void startDataExpunger() {
-    ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-    scheduler.scheduleAtFixedRate(() -> {
-        long currentTime = System.currentTimeMillis();
-        dataStore.entrySet().removeIf(entry -> {
-            boolean shouldRemove = (currentTime - entry.getValue().getTimestamp()) > EXPIRATION_TIME_MS;
-            if (shouldRemove) {
-                System.out.println("Removing expired data with ID: " + entry.getKey());
-            }
-            return shouldRemove;
-        });
-    }, 0, 5, TimeUnit.SECONDS);
-}
-
-
-    // Class to hold weather data with a timestamp
-    static class WeatherData {
+    // Class to represent weather data with timestamp
+    static class WeatherRecord { 
         private final JSONObject weatherJson;
         private final long timestamp;
 
-        public WeatherData(JSONObject weatherJson, long timestamp) {
+        public WeatherRecord(JSONObject weatherJson, long timestamp) {
             this.weatherJson = weatherJson;
             this.timestamp = timestamp;
         }
 
-        public JSONObject getWeatherJson() {
+        public JSONObject getWeatherData() {
             return weatherJson;
         }
 
@@ -135,5 +136,3 @@ private static void handleGetRequest(PrintWriter output) {
         }
     }
 }
-
-
