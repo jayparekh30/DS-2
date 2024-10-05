@@ -42,7 +42,7 @@ public class ContentServer {
     }
 
     // Read the entire file line by line and spliting each line into key-value pair
-    private static LinkedHashMap<String, String> convertFileToLinkedHashMap(String filePath) throws IOException {
+    static LinkedHashMap<String, String> convertFileToLinkedHashMap(String filePath) throws IOException {
          // Use LinkedHashMap to preserve order
         LinkedHashMap<String, String> map = new LinkedHashMap<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
@@ -64,7 +64,7 @@ public class ContentServer {
     }
 
     // Send PUT request and weather data to AggregationServer
-    private static void sendPutRequest(String server, int port, LinkedHashMap<String, String> weatherData) {
+    static void sendPutRequest(String server, int port, LinkedHashMap<String, String> weatherData) {
 
         // Creating socket based connection to the server
         try (Socket socket = new Socket(server, port);

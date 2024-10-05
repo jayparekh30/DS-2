@@ -99,6 +99,7 @@ public class AggregationServer {
         output.println(prettyPrintedJson); // Sending JSON response
         System.out.println("Sent GET response:\n" + prettyPrintedJson);  // Log JSON response
     }
+    
 
     // handlePutRequest() method to Handle PUT requests and store weather data
     private static void handlePutRequest(BufferedReader input, PrintWriter output) throws IOException {
@@ -169,6 +170,8 @@ public class AggregationServer {
             });
         }, 0, 5, TimeUnit.SECONDS); // Every five seconds, clean up
     }
+    
+
 
     // Class to represent weather data
     static class WeatherRecord { 
