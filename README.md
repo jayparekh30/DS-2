@@ -86,7 +86,9 @@ You can find them in the lib folder.
 
 - ***JSON format data will be display in arbitary or unordered manner, this could be because JSON objects are inherently unordered collections of key-value pairs. Unlike lists or arrays, the order of key-value pairs in a JSON object is not guaranteed to be preserved across systems or processes.***
 
-- ***In testing you will see bind exception, all test cases are passed successfully but the server is already running and it tries to connect server again and again.***
+- ***In AggregationServer testing you will see bind exception, all test cases are passed successfully but the server is already running and it tries to connect server again and again.***
+
+-***In ContentServer testing you will also see connection exception, all test cases are passed successfully but the port is already in use so that it shows connection exception.***
 
 ## How to run
 
@@ -99,7 +101,10 @@ javac -cp ".;lib/json-20210307.jar" AggregationServer.java ContentServer.java GE
 ```
 java -cp ".;lib/json-20210307.jar" AggregationServer
 ```
+_Do not close AggregationServer terminal just open new terminal_
+
 ***(3) Take any weather file*** - if you want to see expired weather data remove functionality then please run command ***(3)*** by taking different weather files.
+
 ```
 java -cp ".;lib/json-20210307.jar" ContentServer.java localhost 4567 weather_6.txt
 ```
@@ -109,6 +114,8 @@ java -cp ".;lib/json-20210307.jar" GETClient localhost 4567
 ```
 
 ## Test your code
+
+_Before testing close all the terminal and open a new one_
 
 #### AggregationServerTest
 
