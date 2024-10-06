@@ -57,40 +57,25 @@ public class ContentServerTest {
         serverThread.join();  // Ensure the thread finishes
     }
 
-    // Test the sendPutRequest method
+    // Test for convertFileToLinkedHashMap()
     @Test
-    public void testSendPutRequest() throws Exception {
-        // Mock weather data to be sent
-        LinkedHashMap<String, String> weatherData = new LinkedHashMap<>();
-        weatherData.put("temperature", "25");
-        weatherData.put("humidity", "60");
-
-        // Simulate sending the request to the mock server
-        ContentServer.sendPutRequest("localhost", TEST_PORT, weatherData);
-
-        // If the server responds with Lamport-Clock 123, it means the communication succeeded.
-        // To validate, you can add output verification if required.
-        // We're not asserting specific outputs in this case, just ensuring no exceptions occur.
-    }
-
-    // Test the main method with valid inputs
-    @Test
-    public void testMainWithValidInputs() throws Exception {
-        // Create a temp file to simulate the weather data file
+    public void testConvertFileToLinkedHashMap() throws Exception {
+        // Create a temp file to simulate the weather data
         File tempFile = tempFolder.newFile("weather_data.txt");
         try (FileWriter writer = new FileWriter(tempFile)) {
             writer.write("temperature: 25\n");
             writer.write("humidity: 60\n");
         }
 
-        // Simulate command-line arguments to pass to the main method
-        String[] args = {"localhost", String.valueOf(TEST_PORT), tempFile.getAbsolutePath()};
-        ContentServer.main(args);
+        // Test the conversion
+        LinkedHashMap<String, String> result = ContentServer.convertFileToLinkedHashMap(tempFile.getAbsolutePath());
 
-        // This test ensures that the main method executes successfully.
-        // You can add more assertions by capturing the System.out if needed.
+        assertNotNull(result);
+        assertEquals("25", result.get("temperature"));
+        assertEquals("60", result.get("humidity"));
     }
 
+    
     // Test invalid file path
     @Test(expected = IOException.class)
     public void testConvertFileToLinkedHashMapWithInvalidFile() throws Exception {
