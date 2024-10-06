@@ -27,7 +27,10 @@ public class ContentServerTest {
                     handleClient(clientSocket);
                 }
             } catch (IOException e) {
-                System.err.println("Server error: " + e.getMessage());
+                // Suppress 'socket closed' error if server is shutting down intentionally
+                if (!mockServerSocket.isClosed()) {
+                    System.err.println("Server error: " + e.getMessage());
+                }
             }
         });
         serverThread.start();
