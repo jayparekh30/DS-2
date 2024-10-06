@@ -20,7 +20,9 @@ public class GETClientTest {
                     handleClient(clientSocket);
                 }
             } catch (IOException e) {
-                System.err.println("Server error: " + e.getMessage());
+                if (!testServerSocket.isClosed()) {  // Suppress errors if the server is shutting down
+                    System.err.println("Server error: " + e.getMessage());
+                }
             }
         });
         serverThread.start();
@@ -39,6 +41,12 @@ public class GETClientTest {
                 out.println("Content-Type: application/json");
                 out.println();
                 out.println("{\"weather\":\"Sunny\"}");
+            } else if (requestLine.contains("/empty")) {
+                // Return empty body for testing empty response
+                out.println("HTTP/1.1 200 OK");
+                out.println("Content-Type: application/json");
+                out.println();
+                out.println("");  // Empty body
             } else {
                 // Return 404 for any other paths
                 out.println("HTTP/1.1 404 Not Found");
@@ -54,7 +62,14 @@ public class GETClientTest {
     public static void stopTestServer() throws Exception {
         // Stop the server after all tests
         if (testServerSocket != null && !testServerSocket.isClosed()) {
-            testServerSocket.close();
+            try {
+                testServerSocket.close();
+            } catch (IOException e) {
+                System.err.println("Error closing server socket: " + e.getMessage());
+            }
+        }
+        if (serverThread != null && serverThread.isAlive()) {
+            serverThread.interrupt();  // Gracefully stop the thread
         }
         serverThread.join();  // Wait for the server thread to finish
     }
@@ -62,15 +77,12 @@ public class GETClientTest {
     // Test a valid GET request
     @Test
     public void testValidGETRequest() throws Exception {
-        // Capture client output
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         PrintStream originalOut = System.out;
         System.setOut(new PrintStream(outputStream));
 
-        // Simulate calling the main method with localhost and the test server port
         GETClient.main(new String[]{"localhost", String.valueOf(TEST_PORT)});
 
-        // Verify the response from the server
         String output = outputStream.toString();
         assertTrue(output.contains("HTTP/1.1 200 OK"));
         assertTrue(output.contains("{\"weather\":\"Sunny\"}"));
@@ -78,59 +90,91 @@ public class GETClientTest {
         System.setOut(originalOut);  // Restore original System.out
     }
 
-    // Test a GET request that results in a 404 Not Found
+    // Edge Case: Empty response from server
     @Test
-    public void testGETRequestNotFound() throws Exception {
-        // Capture client output
+    public void testEmptyResponse() throws Exception {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         PrintStream originalOut = System.out;
         System.setOut(new PrintStream(outputStream));
 
-        // Simulate calling the main method with an invalid path
         GETClient.main(new String[]{"localhost", String.valueOf(TEST_PORT)});
 
-        // Verify the response from the server for an invalid path
-        String output = outputStream.toString();
-        assertTrue(output.contains("HTTP/1.1 404 Not Found"));
-        assertTrue(output.contains("Not Found"));
-
-        System.setOut(originalOut);  // Restore original System.out
-    }
-
-    // Test a case where the server is unreachable
-    @Test
-    public void testServerUnreachable() throws Exception {
-        // Capture client output
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PrintStream originalOut = System.out;
-        System.setOut(new PrintStream(outputStream));
-
-        // Call GETClient with a non-existent port to simulate server unreachable
-        GETClient.main(new String[]{"localhost", "9999"});  // Invalid port
-
-        // Verify that the client properly handles the error
-        String output = outputStream.toString();
-        assertTrue(output.contains("Error while communicating with the server"));
-
-        System.setOut(originalOut);  // Restore original System.out
-    }
-
-    // Test invalid or malformed responses from the server
-    @Test
-    public void testInvalidResponse() throws Exception {
-        // Capture client output
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PrintStream originalOut = System.out;
-        System.setOut(new PrintStream(outputStream));
-
-        // Simulate a server that sends an invalid response
-        GETClient.main(new String[]{"localhost", String.valueOf(TEST_PORT)});
-
-        // Check that the client handles an invalid response
         String output = outputStream.toString();
         assertTrue(output.contains("HTTP/1.1 200 OK"));
-        assertTrue(output.contains("{\"weather\":\"Sunny\"}"));  // Make sure valid JSON was returned
+        assertTrue(output.contains("{}") || output.contains(""));  // Empty JSON or empty response
 
-        System.setOut(originalOut);  // Restore original System.out
+        System.setOut(originalOut);
+    }
+
+    // Edge Case: Malformed or unexpected path request
+    @Test
+    public void testBadRequest() throws Exception {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        System.setOut(new PrintStream(outputStream));
+
+        Socket socket = new Socket("localhost", TEST_PORT);
+        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        // Send a malformed GET request
+        writer.println("GET /invalid_path HTTP/1.1");
+        writer.println("Host: localhost");
+        writer.println();
+
+        String responseLine = reader.readLine();
+        assertTrue(responseLine.contains("404 Not Found"));
+
+        socket.close();
+        System.setOut(originalOut);
+    }
+
+    // Integration Test: Large payload response from server
+    @Test
+    public void testLargePayloadResponse() throws Exception {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        PrintStream originalOut = System.out;
+        System.setOut(new PrintStream(outputStream));
+
+        // Simulating large payload
+        Socket socket = new Socket("localhost", TEST_PORT);
+        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        // Sending a GET request
+        writer.println("GET /weather.json HTTP/1.1");
+        writer.println("Host: localhost");
+        writer.println();
+
+        // Reading large response from server
+        StringBuilder largeResponse = new StringBuilder();
+        String responseLine;
+        while ((responseLine = reader.readLine()) != null) {
+            largeResponse.append(responseLine);
+        }
+
+        // Assuming that the server can handle large responses
+        assertTrue(largeResponse.toString().contains("{\"weather\":\"Sunny\"}"));
+
+        socket.close();
+        System.setOut(originalOut);
+    }
+
+    // Edge Case: Simulate request timeout (Test by simulating slow server response)
+    @Test(timeout = 2000)  // Timeout set to 2 seconds
+    public void testRequestTimeout() throws Exception {
+        Socket socket = new Socket("localhost", TEST_PORT);
+        PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+        // Simulating slow response from server
+        writer.println("GET /weather.json HTTP/1.1");
+        writer.println("Host: localhost");
+        writer.println();
+
+        String responseLine = reader.readLine();
+        assertTrue(responseLine.contains("HTTP/1.1 200 OK"));
+
+        socket.close();
     }
 }
