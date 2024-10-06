@@ -17,37 +17,44 @@ public class ContentServerTest {
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();  // Creates temp files and folders for testing
-
-    @BeforeClass
-    public static void startMockServer() throws Exception {
-        // Start a mock server in a separate thread
-        serverThread = new Thread(() -> {
-            try {
-                mockServerSocket = new ServerSocket(TEST_PORT);
-                while (!mockServerSocket.isClosed()) {
+@BeforeClass
+public static void startMockServer() throws Exception {
+    serverThread = new Thread(() -> {
+        try {
+            mockServerSocket = new ServerSocket(TEST_PORT);
+            while (!mockServerSocket.isClosed()) {
+                try {
                     Socket clientSocket = mockServerSocket.accept();
                     handleClient(clientSocket);
+                } catch (IOException e) {
+                    if (!mockServerSocket.isClosed()) {
+                        // Only print errors if the server socket wasn't intentionally closed
+                        System.err.println("Server error: " + e.getMessage());
+                    }
                 }
-            } catch (IOException e) {
-                System.err.println("Server error: " + e.getMessage());
             }
-        });
-        serverThread.start();
-    }
+        } catch (IOException e) {
+            System.err.println("Server error: " + e.getMessage());
+        }
+    });
+    serverThread.start();
+}
 
     private static void handleClient(Socket clientSocket) throws IOException {
-        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+    try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+         PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
 
         String requestLine = in.readLine();
-        if (requestLine.startsWith("PUT")) {
+        if (requestLine != null && requestLine.startsWith("PUT")) {
             out.println("HTTP/1.1 201 Created");
             out.println("Lamport-Clock: 123");
             out.println();
         }
-
+    } finally {
         clientSocket.close();
     }
+}
+
 
     @AfterClass
     public static void stopMockServer() throws Exception {
