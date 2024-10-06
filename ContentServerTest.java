@@ -1,13 +1,11 @@
 import org.junit.*;
 import org.junit.rules.TemporaryFolder;
-// import org.mockito.Mockito;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedHashMap;
 
 import static org.junit.Assert.*;
-// import static org.mockito.Mockito.*;
 
 public class ContentServerTest {
 
@@ -17,44 +15,37 @@ public class ContentServerTest {
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();  // Creates temp files and folders for testing
-@BeforeClass
-public static void startMockServer() throws Exception {
-    serverThread = new Thread(() -> {
-        try {
-            mockServerSocket = new ServerSocket(TEST_PORT);
-            while (!mockServerSocket.isClosed()) {
-                try {
+
+    @BeforeClass
+    public static void startMockServer() throws Exception {
+        // Start a mock server in a separate thread
+        serverThread = new Thread(() -> {
+            try {
+                mockServerSocket = new ServerSocket(TEST_PORT);
+                while (!mockServerSocket.isClosed()) {
                     Socket clientSocket = mockServerSocket.accept();
                     handleClient(clientSocket);
-                } catch (IOException e) {
-                    if (!mockServerSocket.isClosed()) {
-                        // Only print errors if the server socket wasn't intentionally closed
-                        System.err.println("Server error: " + e.getMessage());
-                    }
                 }
+            } catch (IOException e) {
+                System.err.println("Server error: " + e.getMessage());
             }
-        } catch (IOException e) {
-            System.err.println("Server error: " + e.getMessage());
-        }
-    });
-    serverThread.start();
-}
+        });
+        serverThread.start();
+    }
 
     private static void handleClient(Socket clientSocket) throws IOException {
-    try (BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-         PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true)) {
+        BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
 
         String requestLine = in.readLine();
-        if (requestLine != null && requestLine.startsWith("PUT")) {
+        if (requestLine.startsWith("PUT")) {
             out.println("HTTP/1.1 201 Created");
             out.println("Lamport-Clock: 123");
             out.println();
         }
-    } finally {
+
         clientSocket.close();
     }
-}
-
 
     @AfterClass
     public static void stopMockServer() throws Exception {
@@ -82,11 +73,50 @@ public static void startMockServer() throws Exception {
         assertEquals("60", result.get("humidity"));
     }
 
-    
+    // Test for an empty weather data file
+    @Test
+    public void testConvertFileToLinkedHashMapWithEmptyFile() throws Exception {
+        File emptyFile = tempFolder.newFile("empty_weather_data.txt");
+
+        LinkedHashMap<String, String> result = ContentServer.convertFileToLinkedHashMap(emptyFile.getAbsolutePath());
+
+        // Expect the map to be empty
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
     // Test invalid file path
     @Test(expected = IOException.class)
     public void testConvertFileToLinkedHashMapWithInvalidFile() throws Exception {
         // Provide an invalid file path and expect IOException
         ContentServer.convertFileToLinkedHashMap("invalid_path.txt");
+    }
+
+    // Test for a file with incorrect format (missing ':' delimiter)
+    @Test
+    public void testConvertFileToLinkedHashMapWithMalformedFile() throws Exception {
+        // Create a malformed temp file
+        File tempFile = tempFolder.newFile("malformed_weather_data.txt");
+        try (FileWriter writer = new FileWriter(tempFile)) {
+            writer.write("temperature 25\n");  // Incorrect format (missing ':')
+        }
+
+        LinkedHashMap<String, String> result = ContentServer.convertFileToLinkedHashMap(tempFile.getAbsolutePath());
+
+        // Expect the map to be empty since the format is incorrect
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+    }
+
+    // Test failed connection to a server (integration test)
+    @Test
+    public void testSendPutRequestWithFailedConnection() {
+        LinkedHashMap<String, String> weatherData = new LinkedHashMap<>();
+        weatherData.put("temperature", "25");
+        weatherData.put("humidity", "60");
+
+        // Attempt to send data to an unreachable server
+        ContentServer.sendPutRequest("localhost", 9999, weatherData);  // Port 9999 should not be running
+        System.out.println("Test 'testSendPutRequestWithFailedConnection' passed.");
     }
 }
