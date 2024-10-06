@@ -1,9 +1,9 @@
-import java.io.*;
-import java.net.*;
-import java.util.LinkedHashMap;
-import org.json.JSONObject;
+import java.io.*; // Provides class for input output operations 
+import java.net.*; // Provides socket connection
+import java.util.LinkedHashMap; // Provides class for storing weather data in key-value pair 
+import org.json.JSONObject; // To parse and handle weather data JSON object
 
-// The ContentServer class reads weather data , transforming it into JSON, and provide data to AggregationServer.
+// ContentServer class reads weather data , transforming it into JSON, and provide data to AggregationServer
 public class ContentServer {
     // Initialise the LamportClock for tracking time for synchronization
     private static LamportClock clock = new LamportClock(); 
@@ -11,7 +11,7 @@ public class ContentServer {
     // Check for the arguments (Server, Port, Datafield)
     public static void main(String[] args) {
         if (args.length < 3) {
-            System.out.println("Usage: java ContentServer <server> <port> <datafile>");
+            System.out.println("Usage : java ContentServer <server> <port> <datafile>");
             return;
         }
 
