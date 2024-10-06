@@ -1,5 +1,5 @@
-import java.io.*;
-import java.net.*;
+import java.io.*; // Provides class for input and output operations
+import java.net.*; // Provides socket connection
 
 public class GETClient {
 
@@ -15,15 +15,16 @@ public class GETClient {
 
         //Establish a connection to the server
         try {
-            connectToServer(server, port);  // Moved connection logic to a separate method for clarity
+            connectToServer(server, port); 
         } catch (IOException e) {
             System.err.println("Error while communicating with the server: " + e.getMessage());
             e.printStackTrace();
         }
     }
-    // Connect to the server and send a GET request
+    // Send a GET request and connect to server
     private static void connectToServer(String server, int port) throws IOException {
-        Socket socket = new Socket(server, port);  // Open socket connection
+        // Open socket connection
+        Socket socket = new Socket(server, port);  
 
         try (BufferedReader serverResponse = new BufferedReader(new InputStreamReader(socket.getInputStream()));
              PrintWriter requestWriter = new PrintWriter(socket.getOutputStream(), true)) {
@@ -31,28 +32,28 @@ public class GETClient {
             // Send the GET request for weather data
             sendGetRequest(requestWriter);
 
-            // Read and display the response from the server
+            // Display the response from the server
             readServerResponse(serverResponse);
         } finally {
-            socket.close();  // Ensure socket is properly closed after communication
+            socket.close();
         }
     }
 
     // Send GET request to the server in HTTP/1.1 format
     private static void sendGetRequest(PrintWriter requestWriter) {
         requestWriter.println("GET /weather.json HTTP/1.1");
-        requestWriter.println("Host: localhost");  // Adding Host header for HTTP/1.1 compliance
-        requestWriter.println("Connection: close");  // Explicitly close connection after response
-        requestWriter.println();  // Empty line to signal the end of the headers
+        requestWriter.println("Host: localhost"); 
+        requestWriter.println("Connection: close");  // Close connection after response
+        requestWriter.println();  // End of header
     }
 
-    // Read the response from the server and output it to the console
+    // Read the response from the server
     private static void readServerResponse(BufferedReader serverResponse) throws IOException {
         String responseLine;
 
         // Iterate through the response from the server
         while ((responseLine = serverResponse.readLine()) != null) {
-            System.out.println(responseLine);  // Print the received line
+            System.out.println(responseLine);
         }
     }
 }

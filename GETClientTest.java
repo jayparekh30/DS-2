@@ -1,17 +1,17 @@
 import org.junit.*;
-import java.io.*;
-import java.net.*;
-import static org.junit.Assert.*;
+import java.io.*; // Provides class for input and output operations
+import java.net.*; // Provide socket connection
+import static org.junit.Assert.*; // Provide assertion Methods for testing
 
 public class GETClientTest {
 
     private static ServerSocket testServerSocket;
     private static Thread serverThread;
-    private static final int TEST_PORT = 8888;
+    private static final int TEST_PORT = 8888; 
 
     @BeforeClass
     public static void startTestServer() throws Exception {
-        // Start a simple server in a new thread
+        // Start a server in a new thread
         serverThread = new Thread(() -> {
             try {
                 testServerSocket = new ServerSocket(TEST_PORT);
@@ -20,7 +20,7 @@ public class GETClientTest {
                     handleClient(clientSocket);
                 }
             } catch (IOException e) {
-                if (!testServerSocket.isClosed()) {  // Suppress errors if the server is shutting down
+                if (!testServerSocket.isClosed()) { 
                     System.err.println("Server error: " + e.getMessage());
                 }
             }
@@ -46,7 +46,7 @@ public class GETClientTest {
                 out.println("HTTP/1.1 200 OK");
                 out.println("Content-Type: application/json");
                 out.println();
-                out.println("");  // Empty body
+                out.println("");
             } else {
                 // Return 404 for any other paths
                 out.println("HTTP/1.1 404 Not Found");
@@ -69,9 +69,9 @@ public class GETClientTest {
             }
         }
         if (serverThread != null && serverThread.isAlive()) {
-            serverThread.interrupt();  // Gracefully stop the thread
+            serverThread.interrupt();  // Stop the thread
         }
-        serverThread.join();  // Wait for the server thread to finish
+        serverThread.join();
     }
 
     // Test a valid GET request
@@ -161,7 +161,7 @@ public class GETClientTest {
     }
 
     // Edge Case: Simulate request timeout (Test by simulating slow server response)
-    @Test(timeout = 2000)  // Timeout set to 2 seconds
+    @Test(timeout = 2000) 
     public void testRequestTimeout() throws Exception {
         Socket socket = new Socket("localhost", TEST_PORT);
         PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
