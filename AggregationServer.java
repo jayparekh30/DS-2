@@ -1,8 +1,8 @@
-import java.io.*;
-import java.net.*;
-import java.util.concurrent.*;
-import org.json.JSONObject;
-import java.util.concurrent.atomic.AtomicLong;
+import java.io.*; // Provides classes for input and output operations such as reading and writing files
+import java.net.*; // Provides classes for socket networking
+import java.util.concurrent.*; // Provides thread pools and task scheduling
+import org.json.JSONObject; // For creating, parsing, and manipulating JSON object
+import java.util.concurrent.atomic.AtomicLong; // Thread safe class that implements increment and updating values like used for simulating Lamport Clock for proper order of events in the systems
 
 public class AggregationServer {
 
@@ -10,20 +10,18 @@ public class AggregationServer {
     private static final int SERVER_PORT = 4567;  
     // Weather data expiry time - 30 Seconds
     private static final int DATA_EXPIRY_TIME_MS = 30000;
-    
     // ConcurrentHashMap for storing weather data - Take key as ID
     private static final ConcurrentHashMap<String, WeatherRecord> weatherDataMap = new ConcurrentHashMap<>();  
-    
-    // For simulate LamportClock used AtomicLong
+    // To simulate LamportClock used AtomicLong
     private static final AtomicLong LamportClock = new AtomicLong(0);  
 
     public static void main(String[] args) {
         // Verify whether the port is given as an argument; if not, use the default
         int port = (args.length > 0) ? Integer.parseInt(args[0]) : SERVER_PORT;
         
-        // Creat Server Socket to receive client connection
+        // Create Server Socket to receive client connection
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            System.out.println("Server running on port " + port);
+            System.out.println("Server is running on  port " + port);
 
             // Calling initiateDataCleanupTask() to remove expired weather data
             initiateDataCleanupTask();  
@@ -48,7 +46,7 @@ public class AggregationServer {
             // Reading first line of request (GET or PUT)
             String clientRequest = inputReader.readLine();
             // Log incoming request
-            System.out.println("Request received: " + clientRequest);
+            System.out.println("Request is received: " + clientRequest);
             
             // Handle GET requests
             if (clientRequest.startsWith("GET")) {
@@ -57,7 +55,7 @@ public class AggregationServer {
             // Handle PUT requests
             } else if (clientRequest.startsWith("PUT")) {
                 // Log that we are handling a PUT request
-                System.out.println("Handling PUT request...");
+                System.out.println("Handling PUT request : ");
                 handlePutRequest(inputReader, outputWriter);
             } else {
                 outputWriter.println("HTTP/1.1 400 Bad Request"); // Respond with bad request
@@ -109,7 +107,7 @@ public class AggregationServer {
         int contentLength = 0;
 
         // Read and log headers from the request
-        System.out.println("Reading PUT request headers...");
+        System.out.println("Reading PUT request headers :");
         while (!(line = input.readLine()).isEmpty()) {
             System.out.println(line);
             if (line.startsWith("Content-Length:")) {
